@@ -1,101 +1,115 @@
 "use module"
 import Deferrant from "deferrant"
 
-/**
-* Produce an async iterator that
-*/
-export function Cursor( arg= Number.POSITIVE_INFINITY){
-	if( arg.constructor=== Number){
-		arg= {
-		  end: arg
-		}
+class Cursor{
+	constructor( args){
+		// iterator state
+		this.value= null
+		this.done= false
+
+		// internal state
+		this.over= false
+		this.taken= null
+		this.queue= null
+		return this
 	}
-	if( !arg){
-		arg= { end: POSITIVE_INFINITY}
+	async next(){
+		while( true){
+			if( this.done){
+				// already done
+				this.value= null
+				return this
+			}
+			// taken is an iterator of draining things
+			if( this.taken){
+				const next= await this.taken.next()
+				if( !next.done){
+					// consumed something from a taken
+					this.value= next.value
+					return this
+				}else if( this.over){
+					// last has been taken
+					this.done= true
+				}
+				// we tried but taken was already drained
+				this.taken= null
+				continue
+			}
+
+
+			if( !this.takeWait){
+				// we have a chance of getting a take:
+				this.taken= this._take()
+				if( this.taken){
+					// no one blocking us from consuming new take, do it
+					continue
+				}
+
+				// nothing left to consume
+				if( this.over){
+					this.done= true
+					continue
+				}
+
+				// we need to wait for take to have values:
+				this.takeWait= new Deferrant()
+			}
+			// wait for take to be possible again
+			await this.takeWait
+		}
 	}
 
-	async function *cursor(){
-		while( !cursor.isEnd()){
-			if( cursor.queue.length){
-				// capture what we have to dispatch now
-				const drain= cursor.queue
-				// set enqueue to be 
-				cursor.queue= cursor.makeQueue()
-				// return anything ready to dispatch
-				for( const item of drain){
-					yield item
-				}
-				const val= cursor.queue.shift()
-				yield val
-			}else{
-				cursor.waiting= Deferrant()
-				await cursor.waiting
-			}
-		}
-	}
-	// produce additional iterations that may here-after be consumed
-	cursor.step= function( iterations= 1){
+	async step( iterations= 1){
 		if (iterations<= 0){
 			return
 		}
 
 		// produce 
-		let isEnd= cursor.isEnd()
-		while( !isEnd&& iterations> 0){
+		while( !this.over&& !this.done&& iterations> 0){
 			--iterations
-			const val= cursor.produce()
-			let isEnd= cursor.isEnd()
-			if( !isEnd){
-				cursor.queue.push( val)
+			// produce next value
+			const [ value, done]= await this.produce()
+			if( done){
+				// no more
+				this.over= true
+				return
 			}
+			// enqueue next value
+			this._enqueue( value)
 		}
 		// let anyone who was waiting for us know there are now iterations
-		if( cursor.waiting){
-			const oldWaiting= cursor.waiting
-			cursor.waiting= null
-			cursor.waiting.resolve()
+		if( this.takeWait){
+			const oldWait= this.takeWait
+			this.takeWait= null
+			oldWait.resolve()
 		}
 	}
 
-	// defaults
-	cursor.begin= 0
-	cursor.end= Number.POSITIVE_INFINITY
-	cursor.next= undefined // next value to enqueue
-	cursor.queue= null // values ready to be consumed
-	cursor.waiting= null // defer if we need to wait for an enqueue
-	cursor.makeQueue= function(){
-		return []
-	}
-	cursor.clone= function(){
-		const
-		  queue= cursor.queue.clone? cursor.queue.clone(): [ ...cursor.queue],
-		  args= { ...cursor, queue}
-		return new Cursor( args)
+	end(){
+		this.value= null
+		this.done= true
 	}
 
-	// standard "range" implementation of our producer
-	cursor.produce= function(){
-		return cursor.next++
+	[ Symbol.asyncIterator](){
+		return this
 	}
-	cursor.reset= function(){
-		cursor.next= cursor.begin
+	/**
+	* Internal method to add an item to be taken
+	* @internal
+	*/
+	_enqueue( val){
+		const queue= this.queue|| (this.queue= [])
+		queue.push( val)
 	}
-	cursor.end= function(){
-		if( cursor.next< cursor.end){
-			cursor.next= cursor.end
-		}
+	/**
+	* Internal method to take all queued items
+	* @internal
+	*/
+	_take(){
+		const oldQueue= this.queue
+		this.queue= null
+		return oldQueue&& oldQueue[ Symbol.iterator]()
 	}
-	cursor.isEnd= function(){
-		return cursor.next>= cursor.end
-	}
-
-	// copy in anything from args
-	for( const [prop, val] of args.entries()){
-		cursor[ prop]= val
-	}
-	cursor.queue= makeQueue()
-	cursor.reset()
-	return cursor
 }
 export {
   Cursor as cursor

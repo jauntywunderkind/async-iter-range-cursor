@@ -1,44 +1,62 @@
 "use module"
 import Deferrant from "deferrant"
 
-export function range( max= Number.POSITIVE_INFINITY){
+
+/**
+* Like normal or operator `||`, but a value of `0` or `false` wont fall through
+*/
+const orUndefined( ...args){
+	for( const arg of args){
+		if( arg!== undefined){
+			return arg
+		}
+	}
+}
+
+/**
+* Produce an async iterator that
+*/
+export function Range( arg= Number.POSITIVE_INFINITY){
+	const
+	  begin= orUndefined( arg.begin, 0),
+	  end= orUndefined( arg.constructor=== Number&& arg, arg.start)
+
 	async function *range(){
-		while( true){
+		while( !range.atEnd){
 			if( range.queue.length){
 				const val= range.queue.shift()
 				yield val
-			}else if( range.atEnd){
-				return
 			}else{
 				range.waiting= Deferrant()
 				await range.waiting
 			}
 		}
 	}
-	range.next= 0 // next value to enqueue
+	range.next= begin // next value to enqueue
 	range.queue= [] // values ready to be consumed
 	range.waiting= null // defer if we need to wait for an enqueue
 	range.enqueue= function( n= 1){
 		while( !range.atEnd&& n> 0){
 			--n
 			const next= range.next++
-			if( next>= max){
-				console.log("enq-end")
+			if( next>= end){
 				range.atEnd= true
 			}else{
-				console.log("enq-val", next)
 				range.queue.push( next)
 			}
 		}
 		if( range.waiting){
-			console.log("enq-wake")
 			range.waiting.resolve()
-			range.waiting= undefined
+			range.waiting= null
 		}
 	}
 	range.atEnd= false
 	range.end= function(){
 		range.atEnd= true
 	}
-	return range
+	return range()
 }
+export {
+  Range as range
+}
+export default range

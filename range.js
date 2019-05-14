@@ -2,12 +2,11 @@
 import Cursor from "./cursor.js"
 
 class Range extends Cursor{
-	defaults( args){
-		// run parent's defaults
-		super.defaults.call( this, args)
+	constructor( args){
+		super()
 
 		// marshal args into an object
-		if( args.constructor=== Number){
+		if( args&& args.constructor=== Number){
 			args= {
 			  end: args
 			}
@@ -26,7 +25,11 @@ class Range extends Cursor{
 	produce(){
 		const
 		  value= this.i++,
-		  done= val>= this.end
+		  done= value>= this.end
 		return [ done? null: value, done]
 	}
 }
+export {
+  Range as range
+}
+export default Range

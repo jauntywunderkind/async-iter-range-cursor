@@ -22,5 +22,11 @@
 	},
 	"dependencies": {
 		"deferrant": "^1.4.0"
+	},
+	"devDependencies": {
+		"async-iter-read": "^1.0.1",
+		"delay": "^4.2.0",
+		"esm": "^3.2.22",
+		"tape": "^4.10.1"
 	}
 }

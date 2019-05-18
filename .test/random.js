@@ -12,22 +12,17 @@ class DelayedRange extends Range{
 		  n= Math.floor( Math.random() * 12) - 5
 		return val
 		if (n > 0){
-			console.log(`produce:${val[0]} n:${n}`)
 			return delay( n).then(()=> val)
 		}else{
-			console.log(`produce:${val[0]}`)
 			return val
 		}
 	}
 }
 
-
-
 tape( "test", async function( t){
 	let current= 0
 	const r= new DelayedRange()
 	function accept( value){
-		console.log( "accept", JSON.stringify({value}))
 		t.equal( value, current++)
 	}
 
@@ -44,8 +39,7 @@ tape( "test", async function( t){
 	}
 	while( --iters>= 0){
 		const path= Math.floor( Math.random()* 3)
-		let count= Math.floor( Math.random()* 5)
-		console.log(JSON.stringify({count, path, balance}))
+		let count= Math.floor( Math.random()* 5)+ 1
 		if( path=== 0){
 			r.step( count)
 			read( count)
@@ -65,6 +59,12 @@ tape( "test", async function( t){
 		}
 		await delay(3)
 	}
-	console.log( "ok")
-	console.log( await Promise.all(reads))
+	if( balance< 0){
+		r.step( -balance)
+	}
+	let found= await Promise.all( reads)
+	for( let i= 0; i< found.length; ++i){
+		t.equal( found[ i], i)
+	}
+	t.end()
 }, { timeout: 10000})

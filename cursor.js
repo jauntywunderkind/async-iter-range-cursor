@@ -26,7 +26,7 @@ class Cursor{
 				if( !next.done){
 					// consumed something from a taken
 					this.value= next.value
-					return this
+					return next
 				}else if( this.over){
 					// last has been taken
 					this.done= true
@@ -52,7 +52,7 @@ class Cursor{
 				}
 
 				// we need to wait for take to have values:
-				this.takeWait= new Deferrant()
+				this.takeWait= Deferrant()
 			}
 			// wait for take to be possible again
 			await this.takeWait

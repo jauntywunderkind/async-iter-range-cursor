@@ -26,7 +26,10 @@ class Range extends Cursor{
 		const
 		  value= this.i++,
 		  done= value>= this.end
-		return [ done? null: value, done]
+		return {
+		  value: done? 0: value,
+		  done
+		}
 	}
 }
 export {

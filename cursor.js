@@ -89,12 +89,15 @@ export class Cursor{
 		if (iterations<= 0){
 			return
 		}
+		if( this.done){
+			return
+		}
 
 		// produce 
 		while( !this.over&& !this.done&& iterations> 0){
 			--iterations
 			// produce next value
-			const [ value, done]= await this._produce()
+			const { value, done}= await this._produce()
 			if( done){
 				// no more
 				this.over= true

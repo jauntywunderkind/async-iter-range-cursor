@@ -19,17 +19,20 @@ class Range extends Cursor{
 
 		// assign our range defaults
 		this.begin= this.i= args.begin|| 0
-		this.end= args.end
+		this.last= args.end
 		return this
 	}
 	_produce(){
 		const
 		  value= this.i++,
-		  done= value>= this.end
+		  done= this.i> this.last
 		return {
 		  value: done? 0: value,
 		  done
 		}
+	}
+	_final(){
+		return 0
 	}
 }
 export {

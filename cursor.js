@@ -10,8 +10,10 @@ export class Cursor{
 		this.value= null
 		this.done= false
 
-		// internal state
+		// state flags
 		this.running= false // whether next is running
+		this.over= false // whether underlying producer has finished
+		// state
 		this.taken= null // iterator for currently consuming
 		this.queue= null // to be consumed queued here
 		this.head= null // next 'next' here
@@ -39,32 +41,46 @@ export class Cursor{
 
 			// wait for our turn
 			await newTail
-			// move head along
-			this.head= newTail[ $next]
 		}
 
-		this.running= true
 		while( true){
 			if( this.done){
 				return this
 			}
+			// signal that we are trying to read a value
+			this.running= true
 
+			// get the next batch
 			if( !this.taken){
 				this.taken= this._take()
 			}
-			// resolve an async taken
+			// mark that we are doing async resolution & resolve
 			if( this.taken&& this.taken.then){
 				this.taken= await this.taken
 			}
-			// wait for signal if there is nothing to take now
+			// batch failed
 			if( !this.taken){
+				// more has become available while we worked
+				if( this._peek()){
+					continue
+				}
+				// no more ever expected
+				if( this.over){
+					this.running= false
+					// this will transition us to done
+					return this.end()
+				}
+				// wait for signal if there is nothing to take now
 				this.takeWait= Deferrant()
 				await this.takeWait
 				continue
 			}
 
 			// get the value
-			const next= await this.taken.next()
+			let next= this.taken.next()
+			if( next.then){
+				next= await next
+			}
 			// take again if done
 			if( next.done){
 				this.taken= null
@@ -72,11 +88,13 @@ export class Cursor{
 			}
 
 			// advance chain
+			this.value= next.value
 			this.running= false
 			if( this.head){
-				const oldHead= this.head
-				this.head= this.head[ $next]
-				if( !this.head){
+				const
+				  oldHead= this.head,
+				  nextHead= this.head= oldHead[ $next]
+				if( !nextHead){
 					this.tail= null
 				}
 				oldHead.resolve()
@@ -86,22 +104,19 @@ export class Cursor{
 	}
 
 	async step( iterations= 1){
-		if (iterations<= 0){
-			return
-		}
-		if( this.done){
-			return
-		}
-
 		// produce 
 		while( !this.over&& !this.done&& iterations> 0){
 			--iterations
 			// produce next value
-			const { value, done}= await this._produce()
+			let produced= this._produce()
+			if( produced.then){
+				produced= await produced
+			}
+			const { value, done}= produced
 			if( done){
-				// no more
-				this.over= true
-				return
+				// no more entries expected
+				this.end()
+				break
 			}
 			// enqueue next value
 			this._enqueue( value)
@@ -112,14 +127,37 @@ export class Cursor{
 			this.takeWait= null
 			oldWait.resolve()
 		}
+		return this
 	}
 
 	_produce(){
 		throw new Error("virtual method; not implemented")
 	}
 	end(){
-		this.value= null
-		this.done= true
+		if( !this.done){
+			if( this.running|| this.taken|| this._peek()){
+				// indicate not to wait for more takes
+				this.over= true
+				// wake the running
+				if( this.takeWait){
+					this.takeWait.resolve()
+				}
+			}else{
+				// done for real
+				this.done= true
+				if( this._final){
+					this.value= this._final()
+				}
+				// clean up outstanding
+				this.over= false
+				this.tail= null
+				while( this.head){
+					this.head.resolve()
+					this.head= this.head[ $next]
+				}
+			}
+		}
+		return this
 	}
 
 	[ Symbol.asyncIterator](){
@@ -141,6 +179,9 @@ export class Cursor{
 		const oldQueue= this.queue
 		this.queue= null
 		return oldQueue&& oldQueue[ Symbol.iterator]()
+	}
+	_peek(){
+		return !!this.queue
 	}
 }
 export {

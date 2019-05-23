@@ -22,7 +22,7 @@ class Range extends Cursor{
 		this.end= args.end
 		return this
 	}
-	produce(){
+	_produce(){
 		const
 		  value= this.i++,
 		  done= value>= this.end

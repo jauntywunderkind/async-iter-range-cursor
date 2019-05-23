@@ -25,7 +25,7 @@ export class Cursor{
 		}
 
 		if( this.running){
-			// wait for our turn
+			// set ourselves up on tail
 			const
 			  oldTail= this.tail,
 			  newTail= this.tail= Deferrant()
@@ -49,7 +49,9 @@ export class Cursor{
 				return this
 			}
 
-			this.taken= this._take()
+			if( !this.taken){
+				this.taken= this._take()
+			}
 			// resolve an async taken
 			if( this.taken&& this.taken.then){
 				this.taken= await this.taken
@@ -77,16 +79,10 @@ export class Cursor{
 				if( !this.head){
 					this.tail= null
 				}
-				this.head.resolve()
+				oldHead.resolve()
 			}
 			return next
 		}
-
-			// we need to wait for take to have values:
-			this.takeWait= Deferrant()
-		}
-		// wait for take to be possible again
-		await this.takeWait
 	}
 
 	async step( iterations= 1){

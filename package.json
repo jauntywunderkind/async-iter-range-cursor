@@ -1,7 +1,7 @@
 {
 	"name": "async-iter-range",
 	"version": "1.0.0",
-	"description": "",
+	"description": "Manually advanced cursor & range asynchronous iterators",
 	"main": "index.js",
 	"scripts": {
 		"test": "node -r esm .test"

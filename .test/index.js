@@ -1,3 +1,6 @@
 "use module"
-import {} from "./random.js"
-import {} from "./basic.js"
+import {} from "./cursor.js"
+import {} from "./range.js"
+
+// bulk
+import {} from "./bulk.js"

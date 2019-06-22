@@ -1,19 +1,19 @@
 {
-	"name": "async-iter-cursor",
+	"name": "async-iter-range",
 	"version": "1.0.0",
-	"description": "Manually advanced cursor & cursor asynchronous iterators",
+	"description": "Manually advanced range & range asynchronous iterators",
 	"main": "index.js",
 	"scripts": {
 		"test": "node -r esm .test"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://archive.eldergods.com/async-iter-cursor"
+		"url": "https://archive.eldergods.com/async-iter-range"
 	},
 	"keywords": [],
 	"author": "jauntywunderkind",
 	"license": "MIT",
-	"module": "async-iter-cursor.js",
+	"module": "async-iter-range.js",
 	"esm": true,
 	"@std/esm": {
 		"cjs": {
@@ -21,6 +21,7 @@
 		}
 	},
 	"dependencies": {
+		"async-iter-cursor": "^1.0.0",
 		"deferrant": "^1.4.0"
 	},
 	"devDependencies": {

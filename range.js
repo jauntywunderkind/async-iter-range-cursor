@@ -1,5 +1,5 @@
 "use module"
-import Cursor from "./cursor.js"
+import Cursor from "async-iter-cursor"
 
 class Range extends Cursor{
 	constructor( args){

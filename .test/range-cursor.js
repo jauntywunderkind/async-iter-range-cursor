@@ -2,8 +2,7 @@
 import tape from "tape"
 import delay from "delay"
 
-//import readRolling from "async-iter-read/rolling.js"
-import Range from "../range.js"
+import Range from ".."
 
 tape( "step to end", async function( t){
 	let touched= false

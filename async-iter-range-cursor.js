@@ -1,7 +1,7 @@
 "use module"
 import Cursor from "async-iter-cursor"
 
-class Range extends Cursor{
+export class RangeCursor extends Cursor{
 	constructor( args){
 		super()
 
@@ -36,6 +36,10 @@ class Range extends Cursor{
 	}
 }
 export {
-  Range as range
+  RangeCursor as default,
+  RangeCursor as rangeCursor,
+  RangeCursor as Cursor,
+  RangeCursor as cursor,
+  RangeCursor as Range,
+  RangeCursor as range
 }
-export default Range

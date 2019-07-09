@@ -2,8 +2,7 @@
 import tape from "tape"
 import delay from "delay"
 
-import Range from "../range.js"
-
+import Range from ".."
 
 class DelayedRange extends Range{
 	produce(){
